@@ -1,0 +1,2 @@
+project_name=spinningchip
+deployment_path=/var/www/html/spinningchip
