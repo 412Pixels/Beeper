@@ -1,0 +1,36 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches: [ main ] 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Read project config
+        id: get_config
+        run: |
+          project_name=$(grep project_name project-config.txt | cut -d'=' -f2)
+          deployment_path=$(grep deployment_path project-config.txt | cut -d'=' -f2)
+          echo "::set-output name=project_name::$project_name"
+          echo "::set-output name=deployment_path::$deployment_path"
+
+      - name: Deploy to Raspberry Pi
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.RPI_HOST }} 
+          username: ${{ secrets.RPI_USERNAME }}
+          password: ${{ secrets.RPI_PASSWORD }}
+          source: '.'
+          target: ${{ steps.get_config.outputs.deployment_path }} 
+
+      - name: Restart Apache (if needed)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.RPI_HOST }}
+          username: ${{ secrets.RPI_USERNAME }}
+          password: ${{ secrets.RPI_PASSWORD }}
+          script: sudo systemctl restart apache2
