@@ -1,2 +1,2 @@
-project_name=spinningchip
-deployment_path=/var/www/html/spinningchip
+project_name=Beeper
+deployment_path=/var/www/html/Beeper
