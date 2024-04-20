@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Compiled and minified Materialize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!--Let browser know website is optimized for mobile-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  </head>
+  <body>
+  <h4>Beeper</h4>
+  <h5>Allows you to make a beep at a specific frequency.</h5>
+  <div class="container" style="margin-top: 20px;">
+    <button class="btn waves-effect waves-light" onclick="playBeep()">Play Beep</button>
+    <br><br>
+    <button class="btn waves-effect red" onclick="stopBeep()">Stop Beep</button>
+    <br>
+
+    <div class="row" style="margin-top: 20px;">
+      <div class="col s12">
+        <label for="frequencySlider">Frequency: </label>
+        <input type="range" id="frequencySlider" min="20" max="2000" value="440" oninput="adjustFrequency(value)" style="width: 80%;">
+      </div>
+      <br>
+      <div class="input-field col s12 m4 l3">
+        <input type="number" id="frequencyInput" min="20" max="2000" value="440" oninput="adjustFrequency(value)">
+        <label class="active" for="frequencyInput">Frequency (Hz)</label>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+// Create an AudioContext (cross-browser)
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let oscillator = null;
+
+// Function to create an oscillator on demand
+function createOscillator() {
+  if (oscillator !== null) {
+    // If an oscillator already exists, stop and disconnect it
+    oscillator.stop();
+    oscillator.disconnect();
+  }
+
+  oscillator = audioContext.createOscillator();
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(currentFrequency, audioContext.currentTime); // Use the latest frequency value
+
+  const gainNode = audioContext.createGain();
+  gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+
+  oscillator.start();
+}
+
+let currentFrequency = 440; // Default frequency
+
+// Update to listen for changes on both the slider and the new text input
+document.getElementById('frequencySlider').addEventListener('input', function() {
+  adjustFrequency(this.value, 'slider');
+});
+
+document.getElementById('frequencyInput').addEventListener('input', function() {
+  adjustFrequency(this.value, 'input');
+});
+
+function adjustFrequency(value, source) {
+  currentFrequency = value;
+
+  if(source === 'slider') {
+    document.getElementById('frequencyInput').value = value;
+  } else if(source === 'input') {
+    document.getElementById('frequencySlider').value = value;
+  }
+
+  if (oscillator !== null) {
+    // Change frequency in real time if the oscillator is already running
+    oscillator.frequency.setValueAtTime(currentFrequency, audioContext.currentTime);
+  }
+}
+
+async function playBeep() {
+  if(audioContext.state === 'suspended') {
+    await audioContext.resume();
+  }
+
+  // Create or update the oscillator frequency
+  createOscillator();
+}
+
+// Function to stop the beep
+function stopBeep() {
+  if(oscillator !== null) {
+    oscillator.stop();
+    oscillator.disconnect(); // Disconnect the oscillator to free up resources
+    oscillator = null; // Reset the oscillator variable to allow a new one to be created later
+  }
+}
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    
+</body>
+</html>
